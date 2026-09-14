@@ -110,6 +110,7 @@ button:focus-visible, [tabindex]:focus-visible { outline: 3px solid var(--orange
 .mid .at { font-size: 11px; color: var(--muted); }
 .mid .line { font-size: 13px; font-weight: 600; }
 .mid .when { font-size: 11px; color: var(--muted); line-height: 1.2; }
+.mid .rival { font-size: 10px; color: var(--orange); line-height: 1.2; margin-top: 2px; }
 .handle { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 4px; touch-action: none; cursor: grab; background: rgba(0, 0, 0, 0.25); }
 .handle span { display: block; width: 14px; height: 2px; background: var(--muted); border-radius: 1px; }
 .card.dragging .handle { cursor: grabbing; }

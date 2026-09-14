@@ -4,7 +4,9 @@ import { Sound, flip, hitstop, shake, bump, rollNumber, wait } from "./reveal.js
 
 const STATE_KEY = "slate.v1";
 const LIVE_KEY = "slate.live.v1";
-const NAME = "Banjo";
+const DEFAULT_NAME = "Banjo";
+const BONUS = { bonus: true };
+const name = () => state.name ?? DEFAULT_NAME;
 
 const $ = (sel) => document.querySelector(sel);
 const sound = new Sound();
@@ -16,9 +18,9 @@ let view = { week: 1, wall: false, checkedAt: null };
 
 function loadState() {
   try {
-    return { picks: {}, orders: {}, revealed: {}, audio: true, ...JSON.parse(localStorage.getItem(STATE_KEY) ?? "{}") };
+    return { picks: {}, orders: {}, revealed: {}, rivals: {}, audio: true, ...JSON.parse(localStorage.getItem(STATE_KEY) ?? "{}") };
   } catch {
-    return { picks: {}, orders: {}, revealed: {}, audio: true };
+    return { picks: {}, orders: {}, revealed: {}, rivals: {}, audio: true };
   }
 }
 function setState(patch) {
@@ -95,9 +97,13 @@ function fillCard(el, g, order, now) {
     btn.setAttribute("aria-label", `${t.name}${pick === side ? ", your pick" : ""}`);
   }
   el.querySelector(".line").textContent = lineText(g);
+  const rival = state.rivals?.[g.week];
+  const rivalSide = rival?.picks[g.id]?.side;
+  el.querySelector(".rival").textContent = rival ? `${rival.name}: ${rivalSide ? g[rivalSide].abbr : "no call"}` : "";
+  el.querySelector(".rival").hidden = !rival;
   el.querySelector(".when").textContent = g.final ? "Final" : g.state === "in" ? g.clock ?? "Live" : locked ? "Locked" : S.kickoffLabel(g);
   if (g.final && revealed) {
-    const pts = S.scoreWeek(season, g.week, state.picks, order).rows.find((r) => r.id === g.id)?.points ?? 0;
+    const pts = S.scoreWeek(season, g.week, state.picks, order, BONUS).rows.find((r) => r.id === g.id)?.points ?? 0;
     el.querySelector(".conf-num").textContent = pick ? (S.pickHit(g, pick) ? `+${pts}` : "0") : "–";
   }
 }
@@ -120,11 +126,11 @@ function renderStack() {
 
 function renderBug() {
   const order = orderFor(view.week);
-  const wk = S.scoreWeek(season, view.week, state.picks, order);
+  const wk = S.scoreWeek(season, view.week, state.picks, order, BONUS);
   $("#bug-week").textContent = view.week;
   $("#bug-points").textContent = wk.points;
   $("#bug-streak").textContent = S.streak(season, state.picks);
-  $("#bug-season").textContent = S.seasonPoints(season, state.picks, state.orders);
+  $("#bug-season").textContent = S.seasonPoints(season, state.picks, state.orders, BONUS);
   const ws = weeks();
   $("#prev").disabled = view.week <= ws[0];
   $("#next").disabled = view.week >= ws[ws.length - 1];
@@ -147,6 +153,9 @@ function renderTools() {
       : unpicked > 0
         ? `${unpicked} of ${open.length} open ${open.length === 1 ? "game" : "games"} still uncalled. Kickoffs in Perth time.`
         : "All called. Drag the handle to rank them. Top of the stack is worth the most.";
+  const called = games.filter((g) => state.picks[g.id]).length;
+  $("#share").hidden = called === 0;
+  $("#share").textContent = `Send my ${called} ${called === 1 ? "call" : "calls"}`;
   $("#audio").textContent = state.audio ? "Sound on" : "Sound off";
   $("#audio").setAttribute("aria-pressed", String(state.audio));
   $("#fetched").textContent = view.checkedAt ? `Scores from ESPN. Last checked ${S.fmtPerthTime(view.checkedAt.toISOString())} Perth.` : "Scores from ESPN. Using the last saved copy.";
@@ -155,7 +164,7 @@ function renderTools() {
 function renderWall() {
   const order = orderFor(view.week);
   const games = S.gamesInWeek(season, view.week);
-  const wk = S.scoreWeek(season, view.week, state.picks, order);
+  const wk = S.scoreWeek(season, view.week, state.picks, order, BONUS);
   const tiles = wk.rows
     .map((r) => {
       const g = games.find((x) => x.id === r.id);
@@ -164,15 +173,17 @@ function renderWall() {
       return `<div class="tile ${cls} ${isMine(g) ? "mine" : ""}"><span class="abbr">${abbr}</span><span class="pts">${r.hit ? `+${r.points}` : r.side ? `${r.conf}` : "no pick"}</span></div>`;
     })
     .join("");
+  const rival = state.rivals?.[view.week];
+  const rivalScore = rival ? S.scoreWeek(season, view.week, rival.picks, S.weekOrder(season, view.week, rival.order), BONUS) : null;
   $("#wall").innerHTML = `
-    <div class="wall-head"><h2>${wk.hits} of ${wk.rows.length}</h2><p>${NAME}, week ${view.week}, ${wk.points} points</p></div>
+    <div class="wall-head"><h2>${wk.hits} of ${wk.rows.length}</h2><p>${name()}, week ${view.week}, ${wk.points} points${rivalScore ? `<br>${rival.name}: ${rivalScore.hits} of ${rivalScore.rows.length}, ${rivalScore.points} points` : ""}</p></div>
     <div class="wall-grid">${tiles}</div>
     <p class="wall-foot">Screenshot this one.</p>`;
 }
 
 function renderStrip() {
   const ws = weeks();
-  const per = ws.map((w) => S.scoreWeek(season, w, state.picks, orderFor(w)));
+  const per = ws.map((w) => S.scoreWeek(season, w, state.picks, orderFor(w), BONUS));
   const max = Math.max(1, ...per.map((p) => p.points));
   const now = S.currentWeek(season, Date.now());
   $("#strip").innerHTML = ws
@@ -291,7 +302,7 @@ async function revealWeek() {
       hits += 1;
       await hitstop(70);
       sound.hit(hits - 1);
-      const total = S.scoreWeek(season, view.week, state.picks, order).points;
+      const total = S.scoreWeek(season, view.week, state.picks, order, BONUS).points;
       bump(bugPoints);
       rollNumber(bugPoints, total, 420);
       if (isMine(g)) { shake($("#bug")); sound.bengals(); }
@@ -301,7 +312,7 @@ async function revealWeek() {
     await wait(300);
   }
   $("#bug-streak").textContent = S.streak(season, state.picks);
-  $("#bug-season").textContent = S.seasonPoints(season, state.picks, state.orders);
+  $("#bug-season").textContent = S.seasonPoints(season, state.picks, state.orders, BONUS);
   btn.disabled = false;
   await wait(500);
   const allDone = games.every((g) => g.final && state.revealed[g.id]);
@@ -309,7 +320,30 @@ async function revealWeek() {
   render();
 }
 
+async function shareWeek() {
+  const order = orderFor(view.week);
+  const url = `${location.origin}${location.pathname}#${S.encodeRival(view.week, order, state.picks, name())}`;
+  const text = `${name()}'s week ${view.week} calls on The Slate`;
+  if (navigator.share) {
+    await navigator.share({ title: "The Slate", text, url }).catch(() => {});
+    return;
+  }
+  await navigator.clipboard?.writeText(url).catch(() => {});
+  $("#share").textContent = "Link copied";
+  setTimeout(() => renderTools(), 1600);
+}
+
+function importRival() {
+  const rival = S.decodeRival(location.hash);
+  const me = new URLSearchParams(location.search).get("me");
+  if (me) setState({ name: me.slice(0, 24) });
+  if (rival && rival.name !== name()) setState({ rivals: { ...(state.rivals ?? {}), [rival.week]: rival } });
+  if (rival || me) history.replaceState(null, "", location.pathname);
+  return rival;
+}
+
 function wire() {
+  $("#share").addEventListener("click", shareWeek);
   $("#start").addEventListener("click", async () => {
     sound.on = state.audio;
     sound.unlock();
@@ -353,8 +387,9 @@ async function boot() {
   baked = (await res.json()).games;
   season = S.mergeLive(baked, loadLive());
   settleHistory();
-  view = { ...view, week: S.currentWeek(season, Date.now()) };
-  $("#title-name").textContent = NAME;
+  const rival = importRival();
+  view = { ...view, week: rival?.week ?? S.currentWeek(season, Date.now()) };
+  $("#title-name").textContent = name();
   $("#title-sub").textContent = `Week ${view.week} of the 2026 season`;
   $("#title").hidden = false;
   wire();
