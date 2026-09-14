@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>The Slate</title>
+<meta name="description" content="Banjo's weekly call on the real NFL season.">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="The Slate">
+<meta name="robots" content="noindex">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="icon" href="/icons/icon-192.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/slate.css">
+</head>
+<body>
+<div id="title" class="title" hidden>
+  <div class="title-stripes" aria-hidden="true"></div>
+  <p class="title-name" id="title-name">Banjo</p>
+  <h1>The Slate</h1>
+  <p class="title-sub" id="title-sub">Week 2 of the 2026 season</p>
+  <button id="start" class="start" type="button">Deal the week</button>
+  <p class="title-hint">Call every game before it kicks off. Top of the stack is worth the most.</p>
+</div>
+
+<div id="app" class="app" hidden>
+  <header class="bug" id="bug">
+    <button class="bug-nav" id="prev" type="button" aria-label="Previous week">&#8249;</button>
+    <div class="bug-week"><span class="bug-label">Week</span><span class="bug-num" id="bug-week">2</span></div>
+    <div class="bug-stat"><span class="bug-label">Points</span><span class="bug-num" id="bug-points">0</span></div>
+    <div class="bug-stat"><span class="bug-label">Streak</span><span class="bug-num" id="bug-streak">0</span></div>
+    <div class="bug-stat"><span class="bug-label">Season</span><span class="bug-num" id="bug-season">0</span></div>
+    <button class="bug-nav" id="next" type="button" aria-label="Next week">&#8250;</button>
+  </header>
+
+  <div class="tools">
+    <p class="tools-note" id="week-note">Kickoffs in Perth time. Cards lock at kickoff.</p>
+    <div class="tools-buttons">
+      <button id="reveal" class="btn btn-orange" type="button" hidden>Reveal</button>
+      <button id="wall-toggle" class="btn" type="button" hidden>Wall</button>
+      <button id="audio" class="btn btn-quiet" type="button" aria-pressed="true">Sound on</button>
+    </div>
+  </div>
+
+  <main id="stack" class="stack" aria-live="polite"></main>
+
+  <section id="wall" class="wall" hidden></section>
+
+  <footer class="season">
+    <p class="season-title">Season</p>
+    <div id="strip" class="strip" role="tablist" aria-label="Weeks"></div>
+    <p class="season-foot" id="fetched">Scores from ESPN. Last checked just now.</p>
+  </footer>
+</div>
+
+<template id="card-tpl">
+  <article class="card">
+    <div class="conf"><span class="conf-num"></span></div>
+    <button class="side side-away" type="button"><span class="abbr"></span><span class="rec"></span></button>
+    <div class="mid"><span class="at">at</span><span class="line"></span><span class="when"></span></div>
+    <button class="side side-home" type="button"><span class="abbr"></span><span class="rec"></span></button>
+    <div class="handle" aria-label="Drag to reorder" role="button" tabindex="0"><span></span><span></span><span></span></div>
+  </article>
+</template>
+
+<script type="module" src="/slate.js"></script>
+</body>
+</html>

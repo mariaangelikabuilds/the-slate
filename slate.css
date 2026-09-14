@@ -1,0 +1,180 @@
+@charset "UTF-8";
+/* Bengals palette. #000 is the team's brand black, used for the bug, badges and card backs on purpose; the page ground is a warm near-black. */
+:root {
+  --orange: #fb4f14;
+  --black: #000000;
+  --ground: #141210;
+  --card: #1d1916;
+  --paper: #f6f1ea;
+  --muted: #a89e93;
+  --line: #2c2723;
+  --hit: #37c871;
+  --miss: #3a3430;
+  --radius: 10px;
+  --snap: 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  --spring: 420ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--paper);
+  font: 16px/1.4 "IBM Plex Sans", system-ui, sans-serif;
+  overscroll-behavior: none;
+  touch-action: manipulation;
+  -webkit-user-select: none; user-select: none;
+}
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+button:focus-visible, [tabindex]:focus-visible { outline: 3px solid var(--orange); outline-offset: 2px; }
+[hidden] { display: none !important; }
+
+/* Title */
+.title {
+  min-height: 100dvh; display: flex; flex-direction: column; justify-content: center; align-items: flex-start;
+  padding: max(24px, env(safe-area-inset-top)) 24px max(32px, env(safe-area-inset-bottom));
+  background: var(--orange); color: var(--black); position: relative; overflow: hidden;
+}
+.title-stripes {
+  position: absolute; inset: -20% -10% auto -10%; height: 62%; pointer-events: none;
+  background: repeating-linear-gradient(104deg, transparent 0 46px, var(--black) 46px 64px, transparent 64px 118px);
+  clip-path: polygon(0 0, 100% 0, 92% 100%, 4% 84%);
+  opacity: 0.95;
+}
+.title > * { position: relative; }
+.title-name { margin: 0 0 4px; font-weight: 600; font-size: 18px; }
+.title h1 { margin: 0; font: 800 clamp(64px, 22vw, 108px)/0.9 "Bricolage Grotesque", sans-serif; letter-spacing: -0.04em; }
+.title-sub { margin: 14px 0 28px; font-size: 17px; }
+.start {
+  background: var(--black); color: var(--paper); font: 600 18px/1 "IBM Plex Sans", sans-serif;
+  padding: 18px 26px; border-radius: 12px; transition: transform var(--snap);
+}
+.start:active { transform: scale(0.97); }
+.title-hint { margin: 22px 0 0; max-width: 34ch; font-size: 14px; line-height: 1.45; }
+
+/* App shell */
+.app { max-width: 480px; margin: 0 auto; padding: 0 12px calc(24px + env(safe-area-inset-bottom)); }
+
+.bug {
+  position: sticky; top: 0; z-index: 5;
+  margin: 0 -12px; padding: calc(10px + env(safe-area-inset-top)) 8px 10px;
+  background: var(--black); color: var(--paper);
+  display: grid; grid-template-columns: 44px 1fr 1fr 1fr 1fr 44px; align-items: end; gap: 2px;
+  border-bottom: 3px solid var(--orange);
+}
+.bug-nav { height: 44px; font-size: 30px; line-height: 1; color: var(--muted); border-radius: 8px; }
+.bug-nav:disabled { opacity: 0.25; }
+.bug-week, .bug-stat { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.bug-label { font-size: 11px; color: var(--muted); }
+.bug-num { font: 800 30px/1 "Bricolage Grotesque", sans-serif; font-variant-numeric: tabular-nums; }
+.bug-week .bug-num { color: var(--orange); }
+.bug.shake { animation: shake 480ms cubic-bezier(0.36, 0.07, 0.19, 0.97); }
+@keyframes shake {
+  10%, 90% { transform: translate3d(-2px, 0, 0); } 20%, 80% { transform: translate3d(3px, 0, 0) rotate(0.4deg); }
+  30%, 50%, 70% { transform: translate3d(-4px, 0, 0) rotate(-0.6deg); } 40%, 60% { transform: translate3d(4px, 0, 0) rotate(0.6deg); }
+}
+.bug-num.bump { animation: bump 380ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+@keyframes bump { 40% { transform: scale(1.22); color: var(--hit); } }
+
+.tools { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 0 6px; flex-wrap: wrap; }
+.tools-note { margin: 0; font-size: 13px; color: var(--muted); }
+.tools-buttons { display: flex; gap: 8px; }
+.btn { min-height: 40px; padding: 8px 14px; border: 1px solid var(--line); border-radius: 8px; font-weight: 600; font-size: 14px; transition: transform var(--snap), background var(--snap); }
+.btn:active { transform: scale(0.96); }
+.btn-orange { background: var(--orange); color: var(--black); border-color: var(--orange); }
+.btn-quiet { color: var(--muted); }
+
+/* Cards */
+.stack { display: flex; flex-direction: column; gap: 10px; padding: 6px 0 16px; }
+.card {
+  position: relative; display: grid; grid-template-columns: 40px 1fr 76px 1fr 38px; min-height: 88px;
+  background: var(--card); border-radius: var(--radius); overflow: hidden; isolation: isolate;
+  transition: transform var(--spring), opacity var(--snap), box-shadow var(--snap);
+  will-change: transform;
+}
+.card.dragging { z-index: 10; transition: none; box-shadow: 0 14px 30px rgba(0, 0, 0, 0.55); transform: scale(1.02); }
+.card.shifting { transition: transform var(--snap); }
+.conf { display: flex; align-items: center; justify-content: center; background: var(--black); }
+.conf-num { font: 800 24px/1 "Bricolage Grotesque", sans-serif; font-variant-numeric: tabular-nums; }
+.card.mine .conf { background: var(--orange); color: var(--black); }
+.side {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  min-height: 88px; padding: 8px 4px; transition: opacity var(--snap), filter var(--snap), box-shadow var(--snap);
+}
+.side .abbr { font: 800 28px/1 "Bricolage Grotesque", sans-serif; letter-spacing: -0.02em; }
+.side .rec { font-size: 12px; opacity: 0.85; }
+.card.picked .side:not(.on) { opacity: 0.3; filter: saturate(0.25); }
+.side.on { box-shadow: inset 0 0 0 3px var(--paper); }
+.side:active { transform: scale(0.98); }
+.mid { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 6px 2px; text-align: center; }
+.mid .at { font-size: 11px; color: var(--muted); }
+.mid .line { font-size: 13px; font-weight: 600; }
+.mid .when { font-size: 11px; color: var(--muted); line-height: 1.2; }
+.handle { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 4px; touch-action: none; cursor: grab; background: rgba(0, 0, 0, 0.25); }
+.handle span { display: block; width: 14px; height: 2px; background: var(--muted); border-radius: 1px; }
+.card.dragging .handle { cursor: grabbing; }
+
+/* Locked: no input, foil back sheen. Live: score in the middle. */
+.card.locked .side, .card.locked .handle { pointer-events: none; }
+.card.locked .handle span { opacity: 0.3; }
+.card.locked::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 1;
+  background: linear-gradient(115deg, transparent 20%, rgba(255, 255, 255, 0.10) 38%, rgba(255, 255, 255, 0.02) 44%, transparent 60%, rgba(251, 79, 20, 0.10) 80%, transparent 92%);
+}
+.card.locked .conf { background: #111; color: var(--muted); }
+.card.mine.locked .conf { background: #7a2607; color: var(--paper); }
+.card.live .mid .line { color: var(--orange); }
+
+/* Final but not yet revealed: face down. */
+.card.facedown .side, .card.facedown .mid, .card.facedown .handle { visibility: hidden; }
+.card.facedown::before {
+  content: "?"; position: absolute; inset: 0 0 0 40px; z-index: 2; display: grid; place-items: center;
+  font: 800 34px/1 "Bricolage Grotesque", sans-serif; color: var(--orange);
+  background: repeating-linear-gradient(104deg, var(--black) 0 18px, #0c0b0a 18px 26px);
+}
+.card.flip { animation: flip 300ms cubic-bezier(0.4, 0, 0.2, 1); }
+@keyframes flip { 50% { transform: scaleX(0.02); } }
+
+/* Revealed: the badge becomes the points, the loser fades, a check sits where the handle was. */
+.card.revealed .handle span { display: none; }
+.card.revealed .side:not(.won) { opacity: 0.35; filter: saturate(0.25); }
+.card.revealed .side.won { opacity: 1; filter: none; }
+.card.revealed .conf-num { font-size: 20px; }
+.card.hit .conf { background: var(--hit); color: var(--black); }
+.card.hit .side.on { box-shadow: inset 0 0 0 3px var(--hit); }
+.card.hit .handle::after { content: ""; width: 9px; height: 16px; border: solid var(--hit); border-width: 0 3px 3px 0; transform: rotate(45deg) translate(-2px, -2px); }
+.card.miss .conf { background: var(--miss); color: var(--muted); }
+.card.miss .side.on { text-decoration: line-through; text-decoration-thickness: 3px; box-shadow: inset 0 0 0 3px rgba(246, 241, 234, 0.35); }
+.card.unpicked.revealed .conf { background: #111; color: var(--muted); }
+.card.mine.revealed .conf { box-shadow: inset 0 0 0 3px var(--orange); }
+
+/* Wall */
+.wall { padding: 8px 0 18px; }
+.wall-head { display: flex; justify-content: space-between; align-items: baseline; margin: 6px 0 12px; }
+.wall-head h2 { margin: 0; font: 800 26px/1 "Bricolage Grotesque", sans-serif; }
+.wall-head p { margin: 0; color: var(--muted); font-size: 13px; }
+.wall-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.tile { aspect-ratio: 1; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; background: var(--card); color: var(--paper); position: relative; }
+.tile .abbr { font: 800 22px/1 "Bricolage Grotesque", sans-serif; }
+.tile .pts { font-size: 12px; opacity: 0.9; }
+.tile.hit { background: var(--hit); color: var(--black); }
+.tile.miss { background: var(--miss); color: var(--muted); }
+.tile.mine::after { content: ""; position: absolute; top: 6px; right: 6px; width: 10px; height: 10px; border-radius: 50%; background: var(--orange); }
+.wall-foot { margin: 14px 0 0; text-align: center; font-size: 13px; color: var(--muted); }
+
+/* Season strip */
+.season { border-top: 1px solid var(--line); padding-top: 12px; }
+.season-title { margin: 0 0 8px; font-size: 13px; color: var(--muted); }
+.strip { display: grid; grid-template-columns: repeat(18, 1fr); gap: 3px; align-items: end; height: 64px; }
+.wk { display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 4px; height: 100%; border-radius: 4px; }
+.wk .bar { width: 100%; background: var(--line); border-radius: 3px 3px 0 0; min-height: 3px; transition: height var(--spring); }
+.wk.scored .bar { background: var(--hit); }
+.wk.now .bar { background: var(--orange); }
+.wk .n { font-size: 10px; color: var(--muted); line-height: 1; }
+.wk.now .n, .wk[aria-selected="true"] .n { color: var(--paper); font-weight: 600; }
+.wk.bye { opacity: 0.35; }
+.season-foot { margin: 10px 0 0; font-size: 12px; color: var(--muted); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
